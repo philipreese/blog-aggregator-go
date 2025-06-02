@@ -1,13 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
+	_ "github.com/lib/pq"
 	"github.com/philipreese/blog-aggregator-go/internal/config"
+	"github.com/philipreese/blog-aggregator-go/internal/database"
 )
 
 type state struct {
+	db  *database.Queries
 	cfg *config.Config
 }
 
@@ -17,16 +21,29 @@ func main() {
 		log.Fatalf("error reading config: %v", err)
 	}
 
-	s := &state { cfg: &cfg }
+	db, err := sql.Open("postgres", cfg.DBUrl)
+	if err != nil {
+		log.Fatalf("error connecting to database")
+	}
+	defer db.Close()
+	dbQueries := database.New(db)
+
+	programState := &state{
+		db: dbQueries,
+		cfg: &cfg,
+	}
+
 	cmds := commands { registeredCommands: make(map[string]func(*state, command) error) }
 
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		log.Fatalf("usage: cli <command> [args...]")
 	}
 
-	if err:= cmds.run(s, command { Name: os.Args[1], Args: os.Args[2:] }); err != nil {
-		log.Fatalf("error running command %s", os.Args[1])
+	err = cmds.run(programState, command { Name: os.Args[1], Args: os.Args[2:] })
+	if err != nil {
+		log.Fatal(err)
 	}
 }

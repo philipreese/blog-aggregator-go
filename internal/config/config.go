@@ -10,7 +10,7 @@ type Config struct {
 	CurrentUserName string `json:"current_user_name"`
 }
 
-const configFileName = ".gatorconfig-go.json"
+const configFileName = ".gatorconfig.json"
 
 func Read() (Config, error) {
 	configFilePath, err := getConfigFilePath()

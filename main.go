@@ -1,26 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
-	cfg "github.com/philipreese/blog-aggregator-go/internal/config"
+	"github.com/philipreese/blog-aggregator-go/internal/config"
 )
 
+type state struct {
+	cfg *config.Config
+}
+
 func main() {
-	config, err := cfg.Read()
+	cfg, err := config.Read()
 	if err != nil {
 		log.Fatalf("error reading config: %v", err)
 	}
 
-	err = config.SetUser("Philip")
-	if err != nil {
-		log.Fatalf("couldn't set current user: %v", err)
+	s := &state { cfg: &cfg }
+	cmds := commands { registeredCommands: make(map[string]func(*state, command) error) }
+
+	cmds.register("login", handlerLogin)
+
+	if len(os.Args) < 2 {
+		log.Fatalf("usage: cli <command> [args...]")
 	}
 
-	config, err = cfg.Read()
-	if err != nil {
-		log.Fatalf("error reading config: %v", err);
+	if err:= cmds.run(s, command { Name: os.Args[1], Args: os.Args[2:] }); err != nil {
+		log.Fatalf("error running command %s", os.Args[1])
 	}
-	fmt.Println(config)
 }

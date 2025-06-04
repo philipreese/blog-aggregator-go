@@ -14,12 +14,7 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, name)
-VALUES (
-    $1, 
-    $2, 
-    $3, 
-    $4
-)
+VALUES ($1, $2, $3, $4)
 RETURNING id, created_at, updated_at, name
 `
 
@@ -64,8 +59,7 @@ func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, created_at, updated_at, name FROM users
-WHERE users.id=$1
+SELECT id, created_at, updated_at, name FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {

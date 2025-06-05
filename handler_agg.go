@@ -2,8 +2,14 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/philipreese/blog-aggregator-go/internal/database"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -44,7 +50,35 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for _, item := range rssFeed.Channel.Item {
-		fmt.Printf("Found post: %s\n", item.Title)
+		desc := sql.NullString{
+			String: item.Description,
+			Valid: true,
+		}
+
+		publishedAt := sql.NullTime{}
+		if time, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
+			publishedAt = sql.NullTime{
+				Time: time,
+				Valid: true,
+			}
+		}
+		
+		_, err := s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			Title: item.Title,
+			Url: item.Link,
+			Description: desc,
+			PublishedAt: publishedAt,
+			FeedID: feed.ID,
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "posts_url_key") {
+				continue
+			}
+			log.Printf("couldn't create post: %v", err)
+		}
 	}
 
 	fmt.Printf("Feed %s collected, %v posts found", feed.Name, len(rssFeed.Channel.Item))

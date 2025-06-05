@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/philipreese/blog-aggregator-go/internal/database"
+	"github.com/philipreese/gator/internal/database"
 )
 
 func handlerBrowse(s *state, cmd command, user database.User) error {
@@ -13,7 +13,7 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) == 1 {
 		givenLimit, err := strconv.Atoi(cmd.Args[0])
 		if err != nil {
-			return fmt.Errorf("usage: %s [limit]", cmd.Name)
+			return fmt.Errorf("invalid limit: %w", err)
 		}
 		limit = givenLimit
 	}
@@ -23,10 +23,10 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 		Limit: int32(limit),
 	})
 	if err != nil {
-		return fmt.Errorf("error retrieving posts for user: %w", err)
+		return fmt.Errorf("couldn't get posts for user: %w", err)
 	}
 
-	fmt.Printf("Found %v posts for user %s\n", len(posts), user.Name)
+	fmt.Printf("Found %d posts for user %s\n", len(posts), user.Name)
 	for _, post := range posts {
 		fmt.Printf("%s from %s\n", post.PublishedAt.Time, post.FeedName)
 		fmt.Printf("--- %s ---\n", post.Title)

@@ -1,4 +1,4 @@
-module github.com/philipreese/blog-aggregator-go
+module github.com/philipreese/gator
 
 go 1.24.1
 
